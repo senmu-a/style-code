@@ -1,4 +1,4 @@
-import { TreeNode } from './demo';
+import { TreeNode, MaxHeap } from './demo';
 /** 排序算法 */
 
 // -------------------------冒泡排序开始---------------------------
@@ -219,6 +219,13 @@ function quickSort(nums: number[], left: number, right: number) {
 // -------------------------快速排序结束----------------------------
 
 // -------------------------堆排序开始------------------------------
+class HeapSort extends MaxHeap{
+  constructor(nums: number[]) {
+    super(nums);
+  }
+}
+const nums = [1, 1, 2, 3, 4, 5, 6, 7, 8];
+const heapSort = new HeapSort(nums);
 
 // -------------------------堆排序结束------------------------------
 
