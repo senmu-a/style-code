@@ -8,6 +8,18 @@ export class ListNode {
   }
 }
 
+// 双向链表
+export class DoubleListNode {
+  prev: DoubleListNode | null;
+  next: DoubleListNode | null;
+  cur: number;
+  constructor(val?: number, prev?: DoubleListNode, next?: DoubleListNode) {
+    this.cur = val || 0;
+    this.prev = prev || null;
+    this.next = next || null;
+  }
+}
+
 // 二叉树树初始化
 export class TreeNode {
   left: TreeNode | null;
