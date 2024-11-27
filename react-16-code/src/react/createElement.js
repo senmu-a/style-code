@@ -1,7 +1,7 @@
 // const element = React.createElement('h1', { title: 'foo' }, '你好');
 
 export const createElement = (type, props, ...children) => {
-  console.log(children, 'children')
+  // console.log(children, 'children')
   const vNode = {
     type,
     props: {
