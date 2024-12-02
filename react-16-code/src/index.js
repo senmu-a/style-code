@@ -18,6 +18,6 @@ const element = (
 const container = document.querySelector('#root');
 // container.appendChild(node);
 
-React.render(element, container);
-
 console.log('element:', element);
+
+React.render(element, container);
