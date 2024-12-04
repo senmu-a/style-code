@@ -43,14 +43,39 @@ const container = document.querySelector('#root');
 
 // rerender('world');
 
+// function App() {
+//   return (
+//     <h1>Hello World!</h1>
+//   )
+// }
+
+// const element = <App />;
+
+// console.log(element, 'ele')
+
+// React.render(element, container);
+
 function App() {
+  const [count, setCount] = React.useState(0);
+  const [count1, setCount1] = React.useState(1);
+
+  const onClickHandle = () => {
+    setCount((count) => count + 1);
+    setCount((count) => count + 2);
+  }
+
   return (
-    <h1>Hello World!</h1>
+    <div>
+      <h1>Count: {count}</h1>
+      <button onClick={onClickHandle}>+Add</button>
+      <hr/>
+      <h1>Count1: {count1}</h1>
+      <button onClick={() => setCount1((count) => count + 1)}>+1</button>
+      <button onClick={() => setCount1((count) => count + 2)}>+2</button>
+    </div>
   )
 }
 
 const element = <App />;
-
-console.log(element, 'ele')
 
 React.render(element, container);

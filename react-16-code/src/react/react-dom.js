@@ -240,6 +240,9 @@ function reconcileChildren(wipFiber, elements) {
 }
 
 function updateFunctionComponent(fiber) {
+  wipFiber = fiber;
+  hookIndex = 0;
+  wipFiber.hooks = [];
   const children = [fiber.type(fiber.props)];
   reconcileChildren(fiber, children);
 }
@@ -251,6 +254,44 @@ function updateHostComponent(fiber) {
   const elements = fiber.props.children;
 
   reconcileChildren(fiber, elements);
+}
+
+let wipFiber = null;
+let hookIndex = null;
+export function useState(initValue) {
+  // 检查是否有旧的hooks
+  const oldHooks = wipFiber.alternate && wipFiber.alternate.hooks && wipFiber.alternate.hooks[hookIndex];
+
+  console.log('oldHooks', wipFiber.alternate && wipFiber.alternate.hooks);
+
+  const hooks = {
+    state: oldHooks ? oldHooks.state : initValue,
+    queue: []
+  };
+
+  const actions = oldHooks ? oldHooks.queue : [];
+
+  actions.forEach(action => {
+    hooks.state = typeof action === 'function' ? action(hooks.state) : action;
+  });
+
+  const setState = (action) => {
+    hooks.queue.push(action);
+    // 整棵树都被重新渲染
+    wipRoot = {
+      dom: currentRoot.dom,
+      props: currentRoot.props,
+      alternate: currentRoot
+    };
+    nextUnitOfWork = wipRoot;
+    deletions = [];
+  }
+
+  wipFiber.hooks.push(hooks);
+
+  hookIndex++;
+
+  return [hooks.state, setState];
 }
 
 /**
