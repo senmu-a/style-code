@@ -31,7 +31,7 @@ function scheduleTask(task, expirationTime) {
 }
 
 function performTask(currentTime) {
-  console.log('Performing task:' + currentTime);
+  // console.log('Performing task:' + currentTime);
   const frameTime = 1000 / 60; // 每帧的时间间隔
   // 如果任务队列不为空，并且当前的时间减去预留的时间是否小于时间间隔（就是每帧的时间间隔是否还有预留时间）
   while (tasks.length > 0 && performance.now() - currentTime < frameTime) {
@@ -60,3 +60,52 @@ scheduleTask(myTask2, performance.now()); // 过期时间为当前时间
 scheduleTask(myTask3, performance.now() + 3000); // 过期时间为当前时间 + 3000ms
 
 // console.log('Task scheduled');
+
+
+// 使用 setTimeout 实现
+// let tasks = []; // 任务队列
+// let isPerformingTask = false; // 表示当前是否有任务正在执行
+
+// // 示例任务
+// function myTask1() {
+//   console.log('Performing task 1');
+// }
+
+// function myTask2() {
+//   console.log('Performing task 2');
+// }
+
+// function myTask3() {
+//   console.log('Performing task 3');
+// }
+
+// function scheduleTask(task, expirationTime) {
+//   tasks.push({ task, expirationTime }); // 添加到任务队列
+//   if (!isPerformingTask) {
+//     isPerformingTask = true;
+//     setTimeout(() => requestAnimationFrame(performTask), 0); // 使用 setTimeout 来模拟消息通道的行为
+//   }
+// }
+
+// function performTask(currentTime) {
+//   const frameTime = 1000 / 60; // 每帧的时间间隔
+//   while (tasks.length > 0 && performance.now() - currentTime < frameTime) {
+//     const { task, expirationTime } = tasks.shift(); // 从任务队列中取出任务以及过期时间
+//     if (performance.now() >= expirationTime) {
+//       task();
+//     } else {
+//       tasks.push({ task, expirationTime });
+//     }
+//   }
+
+//   if (tasks.length) {
+//     requestAnimationFrame(performTask);
+//   } else {
+//     isPerformingTask = false;
+//   }
+// }
+
+// // 添加超时任务到任务队列，并设置过期时间
+// scheduleTask(myTask1, performance.now() + 1000); // 过期时间为当前时间 + 1000ms
+// scheduleTask(myTask2, performance.now()); // 过期时间为当前时间
+// scheduleTask(myTask3, performance.now() + 3000); // 过期时间为当前时间 + 3000ms
