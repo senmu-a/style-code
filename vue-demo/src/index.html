@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>测试 schedule</title>
+  </head>
+  <body>
+    <div id="app">
+      <input type="text" id="a" v-model="text" />
+      {{text}}
+    </div>
+    <script>
+      window.batcher = "";
+    </script>
+    <script src="./Batcher.js"></script>
+    <script src="./Compile.js"></script>
+    <script src="./Watcher.js"></script>
+    <script src="./Dep.js"></script>
+    <script src="./Observe.js"></script>
+    <script src="./MVVM.js"></script>
+    <script>
+      const vm = new Vue({
+        el: "app",
+        data: {
+          text: "hello world"
+        }
+      });
+
+      for (var i = 0; i < 100; i++) {
+        vm.text = i; // 批处理
+      }
+    </script>
+  </body>
+</html>
