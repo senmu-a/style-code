@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redux Demo</title>
+</head>
+<body>
+  <h1>Redux Demo</h1>
+  <section>
+    <p>Hello World!!!</p>
+  </section>
+
+  <script type="module">
+    import { createStore } from './src/index.js';
+    import reducer from './reducer.js';
+    // initialize
+    const initState = {
+      count: 0
+    };
+    const store = createStore(reducer, initState);
+    
+    // 订阅状态改变
+    store.subscribe(() => {
+      const state = store.getState();
+      console.log(`🌼🌼🌼`, state.count);
+    });
+
+    // 改变 store
+    store.dispatch({
+      type: "INCREMENT"
+    });
+
+    store.dispatch({
+      type: "DECREMENT"
+    });
+  </script>
+</body>
+</html>
