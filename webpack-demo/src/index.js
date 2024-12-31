@@ -1,7 +1,6 @@
-// import { a } from './data';
+const data = '数据文件';
+console.log('data: ', data);
 
-// console.log(a)
-
-import('./data').then(({ a }) => {
-  console.log(a);
-})
+// import('./data').then(({ a }) => {
+//   console.log(a);
+// })
