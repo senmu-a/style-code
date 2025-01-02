@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redux Demo</title>
+</head>
+<body>
+  <h1>Redux Demo</h1>
+  <section>
+    <p>Hello World!!!</p>
+  </section>
+
+  <script type="module">
+    import { createStore, combineReducers } from './src/index.js';
+    import count from './reducers/count.js';
+    import info from './reducers/info.js';
+
+    // 合并 reducer
+    const reducer = combineReducers({
+      count
+    });
+    const store = createStore(reducer);
+
+    // 动态请求了一些东西重新替换reducer
+    const nextReducer = combineReducers({
+      count,
+      info
+    })
+    store.replaceReducer(nextReducer)
+
+    console.log(store.getState())
+    
+    // 订阅状态改变
+    store.subscribe(() => {
+      const state = store.getState();
+      console.log(`🌼🌼🌼`, state.count);
+      console.log('🍌🍌🍌', state.info.name)
+    });
+
+    // 改变 store
+    // store.dispatch({
+    //   type: "INCREMENT"
+    // });
+
+    // store.dispatch({
+    //   type: "SET_NAME",
+    //   name: "森木，冲冲冲！！！"
+    // });
+  </script>
+</body>
+</html>
