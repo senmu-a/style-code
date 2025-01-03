@@ -13,25 +13,32 @@
   </section>
 
   <script type="module">
-    import { createStore, combineReducers } from './src/index.js';
+    import { createStore, combineReducers, applyMiddleware, bindActionCreators } from './src/index.js';
     import count from './reducers/count.js';
     import info from './reducers/info.js';
+    import { increment } from './actions/counter.js';
+    import { setName } from './actions/info.js';
     import exceptionMiddleware from './middlewares/exceptionMiddleware.js';
     import loggerMiddleware from './middlewares/loggerMiddleware.js';
     import timeMiddleware from './middlewares/timeMiddleware.js';
+
+    // const next = store.dispatch;
+    // const exception = exceptionMiddleware(store);
+    // const logger = loggerMiddleware(store);
+    // const timer = timeMiddleware(store);
+
+    // store.dispatch = exception(timer(logger(next)))
+    const rewriteCreateStoreFunc = applyMiddleware(
+      exceptionMiddleware,
+      timeMiddleware,
+      loggerMiddleware
+    );
 
     // 合并 reducer
     const reducer = combineReducers({
       count
     });
-    const store = createStore(reducer);
-
-    const next = store.dispatch;
-    const exception = exceptionMiddleware(store);
-    const logger = loggerMiddleware(store);
-    const timer = timeMiddleware(store);
-
-    store.dispatch = exception(timer(logger(next)))
+    const store = createStore(reducer, {}, rewriteCreateStoreFunc);
 
     // 动态请求了一些东西重新替换reducer
     const nextReducer = combineReducers({
@@ -49,15 +56,15 @@
       console.log('🍌🍌🍌', state.info.name)
     });
 
-    // 改变 store
-    store.dispatch({
-      type: "INCREMENT"
-    });
+    //action暴露于外部以后 直接的访问
+    const actions = bindActionCreators(
+      { increment, setName },
+      store.dispatch
+    );
 
-    store.dispatch({
-      type: "SET_NAME",
-      name: "森木，冲冲冲！！！"
-    });
+    actions.increment();
+    actions.setName()
+    
   </script>
 </body>
 </html>
