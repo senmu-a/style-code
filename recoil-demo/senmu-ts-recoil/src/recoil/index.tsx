@@ -45,8 +45,29 @@ class Atom<T> extends Stateful<T> {
   }
 }
 
+//   ({get}) => {
+//     const text = get(textState);
+//     return text.length;
+//   }
 class Selector<T> extends Stateful<T> {
+  constructor(private readonly generator: TSelectorGenerator<T>) {
+    super(undefined as any);
+    this.value = generator({ get: (dep: Atom<any>) => this.addSub(dep)})
+  }
 
+  // 维护的是 Atom 的变化
+  private registerListener = new Set<Atom<any>>();
+  private addSub(dep: Atom<any>) {
+    if (!this.registerListener.has(dep)) {
+      dep.subscribe(() => this.updateSelector());
+      this.registerListener.add(dep);
+    }
+    return dep.snapshot();
+  }
+
+  private updateSelector() {
+    this.update(this.generator({ get: (dep: Atom<any>) => this.addSub(dep)}));
+  }
 }
 
 function tuplify<T extends unknown[]>(...args: T) {
@@ -65,8 +86,22 @@ export function atom<V>(value: {
   return new Atom(value.default);
 }
 
+type TSelectorGenerator<V> = (context: { get: <T>(dep: Atom<T>) => T }) => V;
+
+// {
+//   key: 'charCountState',
+//   get: ({get}) => {
+//     const text = get(textState);
+//     return text.length;
+//   },
+// }
 // 相当于 Action
-export function selector() {}
+export function selector<V>(value: {
+  key: string;
+  get: TSelectorGenerator<V>
+}) {
+  return new Selector(value.get)
+}
 
 // 可以改变基础状态
 export function useRecoilState<T>(atom: Atom<T>) {
