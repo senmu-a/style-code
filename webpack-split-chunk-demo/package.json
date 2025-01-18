@@ -1,0 +1,16 @@
+{
+  "name": "webpack-split-chunk-demo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "webpack --mode development"
+  },
+  "devDependencies": {
+    "webpack": "^5.97.1",
+    "webpack-cli": "^6.0.1"
+  },
+  "dependencies": {
+    "jquery": "^3.7.1"
+  }
+}
