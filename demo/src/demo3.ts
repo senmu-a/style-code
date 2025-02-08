@@ -186,3 +186,27 @@ function stackLast1(root: TreeNode | null) {
     }
   }
 }
+
+/**
+ * 二叉树的最大深度
+ * 步骤：
+ *  1. 使用层序遍历，遍历一层就将深度加 1
+ *  2. 返回深度
+ * 时间复杂度分析：O(n) n 为节点数，因为每个节点都要遍历一遍
+ * 空间复杂度分析：O(n) n 为节点数，因为每个节点都要入队
+ */
+function maxDepth(root: TreeNode | null): number {
+  if (!root) return 0;
+  let depth = 0;
+  const queue: TreeNode[] = [root];
+  while (queue.length) {
+    const len = queue.length;
+    for (let i = 0; i < len; i++) {
+      const node = queue.shift();
+      node.left && queue.push(node.left);
+      node.right && queue.push(node.right);
+    }
+    depth++;
+  }
+  return depth;
+}
