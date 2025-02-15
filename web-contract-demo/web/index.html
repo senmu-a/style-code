@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web Contract Demo</title>
+  </head>
+  <body>
+    <section>
+      <h2>连接/断开钱包按钮</h2>
+      <button id="connect-wallet">连接钱包</button>
+    </section>
+    <section>
+      <h2>切换链</h2>
+      <button id="change-chain-id">切换链</button>
+      <p id="chain-id"></p>
+    </section>
+    <section>
+      <h2>展示钱包地址</h2>
+      <p id="address"></p>
+    </section>
+    <section>
+      <h2>当前余额</h2>
+      <p id="balance"></p>
+    </section>
+    <section>
+      <h2>设置用户信息</h2>
+      <input type="text" id="name" placeholder="请输入名字" />
+      <input type="number" id="age" placeholder="请输入年龄" />
+      <button id="set-person-data">设置用户信息</button>
+    </section>
+    <section>
+      <h2>获取用户信息</h2>
+      <p id="person-data"></p>
+      <button id="get-person-data">获取用户信息</button>
+    </section>
+    <section>
+      <h2>事件列表</h2>
+      <div id="event-list"></div>
+    </section>
+    <script type="module">
+      import { ethers } from "https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.min.js";
+
+      // ABI
+      const contractABI = [
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "user",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "string",
+              name: "name",
+              type: "string",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "age",
+              type: "uint256",
+            },
+          ],
+          name: "PersonDataChanged",
+          type: "event",
+        },
+        {
+          inputs: [],
+          name: "getPersonData",
+          outputs: [
+            {
+              components: [
+                {
+                  internalType: "string",
+                  name: "name",
+                  type: "string",
+                },
+                {
+                  internalType: "uint256",
+                  name: "age",
+                  type: "uint256",
+                },
+              ],
+              internalType: "struct PersonInfo.PersonData",
+              name: "",
+              type: "tuple",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "_name",
+              type: "string",
+            },
+            {
+              internalType: "uint256",
+              name: "_age",
+              type: "uint256",
+            },
+          ],
+          name: "setPersonData",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ];
+
+      // 初始化，获取 DOM 元素、定义变量
+      const walletBtn = document.getElementById("connect-wallet");
+      const address = document.getElementById("address");
+      const chainIdBtn = document.getElementById("change-chain-id");
+      const chainId = document.getElementById("chain-id");
+      const balanceText = document.getElementById("balance");
+      const eventList = document.getElementById("event-list");
+      const nameInput = document.getElementById("name");
+      const ageInput = document.getElementById("age");
+      const setPersonDataBtn = document.getElementById("set-person-data");
+      const getPersonDataBtn = document.getElementById("get-person-data");
+      const personDataText = document.getElementById("person-data");
+
+      const accounts = [];
+      const contractAddress = "0x662Ac35F3CaeE393A8c602eF080cF2e203Be78A9";
+      let provider;
+      let signer;
+      let contract;
+      
+      // 1. 连接钱包
+      walletBtn.onclick = async () => {
+        if (accounts.length) {
+          // 断开连接
+          handleDisconnect();
+        } else {
+          // 连接钱包
+          const connected = await handleConnectWallet();
+          if (connected) {
+            await handleConnect();
+          }
+        }
+      };
+
+      /**
+       * 与合约交互的代码逻辑
+       */
+      // 连接钱包逻辑
+      const handleConnectWallet = async () => {
+        try {
+          const res = await window.ethereum.request({
+            method: "eth_requestAccounts",
+          });
+          accounts.push(...res);
+          return true; // 连接成功返回 true
+        } catch (error) {
+          console.error("连接失败:", error);
+          alert("连接失败，用户可能拒绝连接");
+          return false; // 连接失败返回 false
+        }
+      };
+
+      const handleDisconnect = () => {
+        walletBtn.innerText = "连接钱包";
+        accounts.length = 0;
+        address.innerText = "";
+        contract?.removeAllListeners();
+        contract = null;
+      };
+
+      const handleConnect = async () => {
+        try {
+          // 初始化 provider
+          provider = await initProvider();
+          if (!provider) {
+            throw new Error("Provider 初始化失败");
+          }
+
+          // 初始化 signer
+          signer = await initSigner(provider);
+          if (!signer) {
+            throw new Error("Signer 初始化失败");
+          }
+
+          walletBtn.innerText = "断开钱包";
+          address.innerText = accounts[0];
+          
+          // 更新余额
+          await updateBalance();
+          
+          // 初始化合约
+          contract = await initContract();
+          
+          // 设置链切换按钮
+          setupChainChangeButton();
+        } catch (error) {
+          console.error("连接处理失败:", error);
+          handleDisconnect(); // 发生错误时断开连接
+          alert("连接处理失败: " + error.message);
+        }
+      };
+
+      const handleChainChange = async (newChainId) => {
+        try {
+          const chainIdDec = parseInt(newChainId, 16);
+          chainId.innerText = `当前链 ID: ${chainIdDec}`;
+          console.log('切换到链:', chainIdDec);
+          
+          // 延迟执行确保网络切换完成
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // 重新初始化合约
+          contract = await initContract();
+          
+          // 更新余额
+          await updateBalance();
+        } catch (error) {
+          console.error('链切换处理失败:', error);
+          alert('链切换处理失败: ' + error.message);
+        }
+      };
+
+      const updateBalance = async () => {
+        try {
+          if (!provider || !accounts[0]) {
+            throw new Error("Provider 或账户未初始化");
+          }
+          const balanceWei = await provider.getBalance(accounts[0]);
+          const balanceInEth = ethers.formatEther(balanceWei);
+          const formattedBalance = Number(balanceInEth).toFixed(4);
+          balanceText.innerText = `${formattedBalance} ETH`;
+        } catch (error) {
+          console.error('更新余额失败:', error);
+          balanceText.innerText = '更新余额失败';
+        }
+      };
+
+      // 将初始化逻辑提取为独立函数
+      const initProvider = async () => {
+        if (!window.ethereum) {
+          console.log("MetaMask未安装");
+          return ethers.getDefaultProvider();
+        }
+        return new ethers.BrowserProvider(window.ethereum);
+      };
+
+      const initSigner = async (provider) => {
+        try {
+          return await provider.getSigner();
+        } catch (error) {
+          console.error("获取签名者失败:", error);
+          return null;
+        }
+      };
+
+      const initContract = async () => {
+        try {
+          // 1. 清除旧的事件监听
+          if (contract) {
+            contract.removeAllListeners();
+          }
+
+          // 2. 重新初始化 provider 和 signer
+          provider = await initProvider();
+          signer = await initSigner(provider);
+          
+          // 3. 等待网络准备就绪
+          await provider.getNetwork();
+          
+          // 4. 创建新合约实例
+          const newContract = new ethers.Contract(contractAddress, contractABI, signer);
+          
+          // 5. 绑定事件监听
+          setupEventListeners(newContract);
+          
+          // 6. 设置用户信息按钮事件
+          setupPersonDataButtons(newContract);
+          
+          return newContract;
+        } catch (error) {
+          console.error('合约初始化失败:', error);
+          throw error;
+        }
+      };
+
+      // 事件监听
+      const setupEventListeners = (contract) => {
+        // 合约事件监听
+        contract.on("PersonDataChanged", (user, name, age) => {
+          addEventToList(user, name, age);
+        });
+
+        // 链切换事件监听
+        window.ethereum.removeAllListeners('chainChanged');
+        window.ethereum.on('chainChanged', handleChainChange);
+      };
+
+      const addEventToList = (user, name, age) => {
+        const eventItem = document.createElement("div");
+        eventItem.className = "event-item";
+        eventItem.textContent = `新事件: 用户 = ${user}, 名字 = ${name}, 年龄 = ${age}`;
+        eventList.insertBefore(eventItem, eventList.firstChild);
+      };
+
+      // 添加链切换按钮的功能设置
+      const setupChainChangeButton = async () => {
+        try {
+          // 获取并显示当前链ID
+          const currentChainId = await window.ethereum.request({
+            method: "eth_chainId",
+          });
+          chainId.innerText = `当前链 ID: ${parseInt(currentChainId, 16)}`;
+
+          // 设置切换链按钮的点击事件
+          chainIdBtn.onclick = async () => {
+            try {
+              // 尝试切换到 Ganache 网络
+              await window.ethereum.request({
+                method: "wallet_switchEthereumChain",
+                params: [{ chainId: "0x539" }], // Ganache 的 chainId 1337
+              });
+            } catch (switchError) {
+              // 如果网络不存在，则添加 Ganache 网络
+              if (switchError.code === 4902) {
+                try {
+                  await window.ethereum.request({
+                    method: "wallet_addEthereumChain",
+                    params: [
+                      {
+                        chainId: "0x539",
+                        chainName: "Ganache",
+                        nativeCurrency: {
+                          name: "ETH",
+                          symbol: "ETH",
+                          decimals: 18,
+                        },
+                        rpcUrls: ["http://127.0.0.1:7545"],
+                      },
+                    ],
+                  });
+                } catch (addError) {
+                  console.error("添加 Ganache 网络失败:", addError);
+                  alert("添加 Ganache 网络失败");
+                }
+              }
+            }
+          };
+        } catch (error) {
+          console.error("设置链切换按钮失败:", error);
+          alert("设置链切换按钮失败: " + error.message);
+        }
+      };
+
+      // 添加设置用户信息的按钮事件处理
+      const setupPersonDataButtons = (contract) => {
+        // 设置用户信息按钮
+        setPersonDataBtn.onclick = async () => {
+          try {
+            const name = nameInput.value.trim();
+            const age = parseInt(ageInput.value);
+
+            if (!name) throw new Error("请输入名字");
+            if (isNaN(age) || age <= 0) throw new Error("请输入有效年龄");
+
+            setPersonDataBtn.disabled = true;
+            setPersonDataBtn.innerText = "设置中...";
+
+            const tx = await contract.setPersonData(name, age);
+            console.log("交易发送:", tx.hash);
+
+            await tx.wait();
+            alert("设置成功！");
+          } catch (error) {
+            console.error("设置失败:", error);
+            alert("设置失败: " + error.message);
+          } finally {
+            setPersonDataBtn.disabled = false;
+            setPersonDataBtn.innerText = "设置用户信息";
+          }
+        };
+
+        // 获取用户信息按钮
+        getPersonDataBtn.onclick = async () => {
+          try {
+            getPersonDataBtn.disabled = true;
+            getPersonDataBtn.innerText = "获取中...";
+
+            const personData = await contract.getPersonData();
+            console.log("获取到的数据:", personData);
+
+            personDataText.innerText = `名字: ${personData[0]}, 年龄: ${personData[1]}`;
+          } catch (error) {
+            console.error("获取数据失败:", error);
+            personDataText.innerText = "获取数据失败: " + error.message;
+          } finally {
+            getPersonDataBtn.disabled = false;
+            getPersonDataBtn.innerText = "获取用户信息";
+          }
+        };
+      };
+    </script>
+  </body>
+</html>
