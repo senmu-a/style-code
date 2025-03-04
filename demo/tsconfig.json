@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "noImplicitAny": true,
     "lib": ["ESNext", "DOM"],
-    "target": "ESNext"
+    "target": "ESNext",
+    "moduleResolution": "nodenext",
+    "module": "NodeNext",
   }
 }
