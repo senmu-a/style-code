@@ -41,3 +41,45 @@ class Search {
     return hash.get(target);
   }
 }
+
+/** 合并两个有序链表 */
+class ListNode {
+  val: number;
+  next: ListNode | null;
+  constructor(val?: number, next?: ListNode | null) {
+      this.val = (val === undefined ? 0 : val);
+      this.next = (next === undefined ? null : next);
+  }
+}
+
+/**
+ * 合并两个有序链表
+ *  1. 容错判断
+ *  2. 创建一个新的链表用来存放合并后的链表
+ *  3. 遍历两个链表，比较两个链表的值，将较小的值放入新链表中
+ *  4. 当其中一个链表遍历完后，将另一个链表剩余的部分直接放入新链表中
+ *  5. 返回新链表
+ * 时间复杂度：最坏的情况下，两个链表都需要遍历一遍，所以时间复杂度为 O(n)
+ * 空间复杂度：O(1)
+ */
+function mergeTwoLists(list1: ListNode | null, list2: ListNode | null): ListNode | null {
+  if (!list1 && !list2) return null;
+  if (list1 && !list2) return list1;
+  if (!list1 && list2) return list2;
+
+  let dummy = new ListNode();
+  let node = dummy
+
+  while (list1 && list2) {
+      if (list1.val <= list2.val) {
+          node.next = new ListNode(list1.val);
+          list1 = list1.next;
+      } else {
+          node.next = new ListNode(list2.val);
+          list2 = list2.next;
+      }
+      node = node.next;
+  }
+  node.next = list1 || list2;
+  return dummy.next;
+};
